@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -48,7 +49,13 @@ func main() {
 	results := apivalidation.OperatorHubValidator.Validate(objs...)
 	// fmt.Printf("Returned from OperatorHubValidator. results count [%v]\n", len(results))
 	for _, result := range results {
-		fmt.Printf("%v\n", result)
+		// fmt.Printf("%v\n", result)
+		prettyJSON, err := json.MarshalIndent(result, "", "    ")
+		if err != nil {
+			fmt.Printf("XXX ERROR: %v\n", err)
+		}
+		// fmt.Fprintf(w, "%s\n", string(prettyJSON))
+		fmt.Printf("%s\n", string(prettyJSON))
 	}
 	// fmt.Println("We're done")
 
