@@ -15,20 +15,18 @@ import (
 
 	"github.com/spf13/afero"
 	"sigs.k8s.io/yaml"
-	// apierrors "github.com/operator-framework/api/pkg/validation/errors"
-	// interfaces "github.com/operator-framework/api/pkg/validation/interfaces"
-	// "k8s.io/apimachinery/pkg/labels"
 )
 
 func main() {
+
+	// we expect a single argument which is the bundle root.
+	// usage: validator-poc <bundle root>
 	if len(os.Args) < 2 {
 		fmt.Printf("usage: %s <bundle root>\n", os.Args[0])
 		os.Exit(1)
 	}
 
-	// fmt.Printf("running %s %s\n", os.Args[0], os.Args[1])
-
-	// Read the bundle object and metadata from the created/passed in directory.
+	// Read the bundle object and metadata from the passed in directory.
 	bundle, _, err := getBundleDataFromDir(os.Args[1])
 	if err != nil {
 		fmt.Printf("problem getting bundle [%s] data, %v\n", os.Args[1], err)
@@ -36,29 +34,28 @@ func main() {
 	}
 
 	// TODO: objs is the list of objects in a bundle
-	// Pass all exposed bundle objects to the validator, since the underlying validator could filter by type
-	// or arbitrary unstructured object keys.
-	// NB(estroz): we may also want to pass metadata to these validators, however the set of metadata in a bundle
-	// object is not complete (only dependencies, no annotations).
+	// Pass all exposed bundle objects to the validator, since the underlying
+	// validator could filter by type or arbitrary unstructured object keys.
+	// NB(estroz): we may also want to pass metadata to these validators,
+	// however the set of metadata in a bundle object is not complete
+	// (only dependencies, no annotations).
 	objs := bundle.ObjectsToValidate()
 	for _, obj := range bundle.Objects {
 		objs = append(objs, obj)
 	}
 
-	// fmt.Println("Calling OperatorHubValidator")
+	// pass the objects to the validator
 	results := apivalidation.OperatorHubValidator.Validate(objs...)
-	// fmt.Printf("Returned from OperatorHubValidator. results count [%v]\n", len(results))
+
+	// take each of the ManifestResults and print to STDOUT
 	for _, result := range results {
-		// fmt.Printf("%v\n", result)
 		prettyJSON, err := json.MarshalIndent(result, "", "    ")
 		if err != nil {
+			// should output JSON so that the call knows how to parse it
 			fmt.Printf("XXX ERROR: %v\n", err)
 		}
-		// fmt.Fprintf(w, "%s\n", string(prettyJSON))
 		fmt.Printf("%s\n", string(prettyJSON))
 	}
-	// fmt.Println("We're done")
-
 }
 
 // getBundleDataFromDir returns the bundle object and associated metadata from dir, if any.
@@ -87,7 +84,10 @@ func getBundleDataFromDir(dir string) (*apimanifests.Bundle, string, error) {
 }
 
 // -------------------------------------------------------
-// Copied code from internal Operator SDK registry package
+// Everything below this line was copied code from
+// internal Operator SDK registry package. We would want
+// to make this a library or other reusable code.
+// -------------------------------------------------------
 
 type MetadataNotFoundError string
 
